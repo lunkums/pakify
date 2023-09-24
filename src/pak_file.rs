@@ -1,11 +1,11 @@
-use std::{fs::File, mem, os::windows::prelude::FileExt};
+use std::fs::File;
 
 use crate::{pak_file_entry::PakFileEntry, pak_header::PakHeader};
 
 #[derive(Debug)]
 pub struct PakFile {
-    header: PakHeader,
-    entries: Vec<PakFileEntry>,
+    pub header: PakHeader,
+    pub entries: Vec<PakFileEntry>,
 }
 
 impl PakFile {

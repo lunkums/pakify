@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use pak_rs::PakFile;
+use pakify::PakFile;
 
 fn main() {
     const PAK_FILE_PATH: &str = "res/foo.pak";
