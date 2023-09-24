@@ -22,6 +22,7 @@ match file {
 
 # Future Plans
 
+- Replace all uses of `seek_read` with a cross-platform function
 - Implement additional validation
 - Add the ability to load data from the .pak file's virtual file system
 - Implement a test suite
