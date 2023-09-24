@@ -17,7 +17,7 @@ impl fmt::Debug for PakFileEntry {
 }
 
 impl PakFileEntry {
-    pub const NAME_LENGTH: usize = 56;
+    const NAME_LENGTH: usize = 56;
 
     fn name(&self) -> String {
         let mut name = String::new();
