@@ -1,24 +1,36 @@
-use std::fs::File;
-
 use pakify::{PakError, PakFile};
 
-fn main() {
-    const PAK_FILE_PATH: &str = "res/foo.pak";
-    const TEST_ENTRY_PATH: &str = "folder/foo.txt";
+const PAK_FILE_PATH: &str = "res/foo.pak";
+const TEST_ENTRY_PATH: &str = "folder/foo.txt";
+const MISSING_ENTRY_PATH: &str = "nothing.txt";
 
-    match pak_test(PAK_FILE_PATH, TEST_ENTRY_PATH) {
+fn main() {
+    match pak_test() {
         Ok(_) => println!("Successfully loaded the pak file at {PAK_FILE_PATH}"),
         Err(error) => println!("Failed to load the pak file due to: {error}"),
     }
 }
 
-fn pak_test(file_path: &str, entry_path: &str) -> Result<(), PakError> {
-    let file = File::open(file_path)
-        .expect(format!("pak file should exist at: {file_path}").as_str());
+fn pak_test() -> Result<(), PakError> {
+    let file = std::fs::File::open(PAK_FILE_PATH)
+        .expect(format!("pak file should exist at: {}", PAK_FILE_PATH).as_str());
     let mut pak_file = PakFile::load(file)?;
-    let entry = pak_file.load_entry(entry_path)?;
 
-    println!("Contents of the '{}' entry: {:#?}", entry_path, entry.escape_ascii().to_string());
+    println!("The pak file: {:#?}", pak_file);
+
+    let entry = pak_file.load_entry(TEST_ENTRY_PATH)?;
+
+    println!(
+        "Contents of the '{}' entry: {:#?}",
+        TEST_ENTRY_PATH,
+        entry.escape_ascii().to_string()
+    );
+
+    let error = pak_file
+        .load_entry(MISSING_ENTRY_PATH)
+        .expect_err(format!("Shouldn't have been able to load '{}'", MISSING_ENTRY_PATH).as_str());
+
+    println!("Expected error: {}", error);
 
     Ok(())
 }
