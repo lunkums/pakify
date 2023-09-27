@@ -5,10 +5,6 @@ Explore (Quake) .pak files in Rust.
 # Usage
 
 ```rs
-use ;
-
-use pakify::PakFile;
-
 fn main() {
     const PAK_FILE_PATH: &str = "res/foo.pak";
     let file = std::fs::File::open(PAK_FILE_PATH);
@@ -16,7 +12,7 @@ fn main() {
     match file {
         Ok(file) => {
             println!("Opened {}", PAK_FILE_PATH);
-            match PakFile::load(&file) {
+            match pakify::PakFile::load(&file) {
                 Ok(pak_file) => println!("{:#?}", pak_file),
                 Err(error) => println!("Failed to read {PAK_FILE_PATH} due to: {error}"),
             }
@@ -24,7 +20,6 @@ fn main() {
         Err(error) => println!("Failed to open the file due to: {error}"),
     }
 }
-
 ```
 
 # Future Plans
