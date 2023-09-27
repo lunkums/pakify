@@ -1,4 +1,8 @@
-use std::{fs::File, mem, io::{SeekFrom, Seek, Read}};
+use std::{
+    fs::File,
+    io::{Read, Seek, SeekFrom},
+    mem,
+};
 
 use crate::pak_error::PakError;
 
@@ -13,6 +17,10 @@ impl PakFileEntry {
     pub const SIZE: usize = 64;
 
     const NAME_LENGTH: usize = 56;
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 
     pub fn load_entries(
         file: &mut File,
@@ -65,5 +73,19 @@ impl PakFileEntry {
         }
 
         Ok(entries)
+    }
+
+    pub fn load<T: Read + Seek>(&self, source: &mut T) -> Result<Vec<u8>, PakError> {
+        let size = self.size as usize;
+        let mut buffer = vec![0u8; size];
+
+        source.seek(SeekFrom::Start(self.offset as u64))?;
+        let bytes_read = source.read(&mut buffer)?;
+
+        if bytes_read == size {
+            Ok(buffer)
+        } else {
+            Err(PakError::UnexpectedEof)
+        }
     }
 }

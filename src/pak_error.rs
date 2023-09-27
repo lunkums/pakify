@@ -1,8 +1,10 @@
 use std::{fmt, io};
 
+#[derive(Debug)]
 pub enum PakError {
     Io(io::Error),
     InvalidField(&'static str),
+    MissingEntry(String),
     UnexpectedEof,
 }
 
@@ -16,7 +18,8 @@ impl fmt::Display for PakError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
             PakError::Io(io_error) => io_error.fmt(f),
-            PakError::InvalidField(field_name) => write!(f, "Invalid field ({})", field_name),
+            PakError::InvalidField(field) => write!(f, "Invalid field ({})", field),
+            PakError::MissingEntry(entry) => write!(f, "Missing entry ({})", entry),
             PakError::UnexpectedEof => f.write_str("Unexpected EOF"),
         }
     }

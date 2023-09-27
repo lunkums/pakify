@@ -1,4 +1,9 @@
-use std::{fmt, fs::File, mem, io::{SeekFrom, Seek, Read}};
+use std::{
+    fmt,
+    fs::File,
+    io::{Read, Seek, SeekFrom},
+    mem,
+};
 
 use crate::{pak_error::PakError, pak_file_entry::PakFileEntry};
 
