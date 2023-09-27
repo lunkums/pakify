@@ -4,7 +4,7 @@ use crate::pak_file_entry::PakFileEntry;
 
 pub struct PakHeader {
     id: u32,
-    pub offset: u32,
+    offset: u32,
     size: u32,
 }
 
@@ -21,6 +21,10 @@ impl fmt::Debug for PakHeader {
 impl PakHeader {
     pub fn num_entries(&self) -> usize {
         self.size as usize / mem::size_of::<PakFileEntry>()
+    }
+
+    pub fn offset(&self) -> u32 {
+        self.offset
     }
 
     fn id(&self) -> String {
