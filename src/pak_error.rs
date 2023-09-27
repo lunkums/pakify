@@ -16,7 +16,7 @@ impl fmt::Display for PakError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
             PakError::Io(io_error) => io_error.fmt(f),
-            PakError::InvalidField(field_name) => f.write_str(field_name),
+            PakError::InvalidField(field_name) => write!(f, "Invalid field ({})", field_name),
             PakError::UnexpectedEof => f.write_str("Unexpected EOF"),
         }
     }
