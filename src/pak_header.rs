@@ -1,4 +1,4 @@
-use std::{fmt, fs::File, mem, os::windows::prelude::FileExt};
+use std::{fmt, fs::File, mem, io::{SeekFrom, Seek, Read}};
 
 use crate::{pak_error::PakError, pak_file_entry::PakFileEntry};
 
@@ -35,7 +35,7 @@ impl PakHeader {
             .collect()
     }
 
-    pub fn load(file: &File) -> Result<PakHeader, PakError> {
+    pub fn load(file: &mut File) -> Result<PakHeader, PakError> {
         const VALID_PAK_ID: u32 = 1262698832; // Equal to the UTF-8 string "PACK"
         const SIZE: usize = 4;
 
@@ -43,7 +43,8 @@ impl PakHeader {
 
         // Read the id
         let position = 0;
-        let bytes_read = file.seek_read(&mut buffer, position)?;
+        file.seek(SeekFrom::Start(position))?;
+        let bytes_read = file.read(&mut buffer)?;
         let id = if bytes_read != SIZE {
             return Err(PakError::UnexpectedEof);
         } else {
@@ -56,8 +57,9 @@ impl PakHeader {
         }
 
         // Read the offset
-        let position = mem::size_of_val(&id) as u64;
-        let bytes_read = file.seek_read(&mut buffer, position)?;
+        let position = position + mem::size_of_val(&id) as u64;
+        file.seek(SeekFrom::Start(position))?;
+        let bytes_read = file.read(&mut buffer)?;
         let offset = if bytes_read != SIZE {
             return Err(PakError::UnexpectedEof);
         } else {
@@ -71,7 +73,8 @@ impl PakHeader {
 
         // Read the size
         let position = position + mem::size_of_val(&offset) as u64;
-        let bytes_read = file.seek_read(&mut buffer, position)?;
+        file.seek(SeekFrom::Start(position))?;
+        let bytes_read = file.read(&mut buffer)?;
         let size = if bytes_read != SIZE {
             return Err(PakError::UnexpectedEof);
         } else {

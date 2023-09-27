@@ -9,9 +9,9 @@ fn main() {
     match file {
         Ok(file) => {
             println!("Opened {}", PAK_FILE_PATH);
-            match PakFile::load(&file) {
+            match PakFile::load(file) {
                 Ok(pak_file) => println!("{:#?}", pak_file),
-                Err(error) => println!("Failed to read {PAK_FILE_PATH} due to: {error}"),
+                Err(error) => println!("Failed to load {PAK_FILE_PATH} due to: {error}"),
             }
         }
         Err(error) => println!("Failed to open the file due to: {error}"),

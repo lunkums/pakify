@@ -1,4 +1,4 @@
-use std::{fs::File, mem, os::windows::prelude::FileExt};
+use std::{fs::File, mem, io::{SeekFrom, Seek, Read}};
 
 use crate::pak_error::PakError;
 
@@ -15,21 +15,21 @@ impl PakFileEntry {
     const NAME_LENGTH: usize = 56;
 
     pub fn load_entries(
-        file: &File,
+        file: &mut File,
         length: usize,
         offset: u32,
     ) -> Result<Vec<PakFileEntry>, PakError> {
         const NAME_SIZE: usize = PakFileEntry::NAME_LENGTH;
-        const OFFSET_SIZE: usize = 4;
 
         let mut entries = Vec::with_capacity(length);
         let mut name_buffer = [0u8; NAME_SIZE];
-        let mut offset_size_buffer = [0u8; OFFSET_SIZE];
+        let mut offset_size_buffer = [0u8; mem::size_of::<u32>()];
 
         for i in 0..length {
             // Read the name
-            let position = (offset as usize + i * mem::size_of::<PakFileEntry>()) as u64;
-            let bytes_read = file.seek_read(&mut name_buffer, position)?;
+            let position = (offset as usize + i * PakFileEntry::SIZE) as u64;
+            file.seek(SeekFrom::Start(position))?;
+            let bytes_read = file.read(&mut name_buffer)?;
             let name = if bytes_read != NAME_SIZE {
                 return Err(PakError::UnexpectedEof);
             } else {
@@ -43,8 +43,9 @@ impl PakFileEntry {
 
             // Read the offset
             let position = position + NAME_SIZE as u64;
-            let bytes_read = file.seek_read(&mut offset_size_buffer, position)?;
-            let offset = if bytes_read != OFFSET_SIZE {
+            file.seek(SeekFrom::Start(position))?;
+            let bytes_read = file.read(&mut offset_size_buffer)?;
+            let offset = if bytes_read != mem::size_of::<u32>() {
                 return Err(PakError::UnexpectedEof);
             } else {
                 u32::from_le_bytes(offset_size_buffer)
@@ -52,8 +53,9 @@ impl PakFileEntry {
 
             // Read the size
             let position = position + mem::size_of_val(&offset) as u64;
-            let bytes_read = file.seek_read(&mut offset_size_buffer, position)?;
-            let size = if bytes_read != OFFSET_SIZE {
+            file.seek(SeekFrom::Start(position))?;
+            let bytes_read = file.read(&mut offset_size_buffer)?;
+            let size = if bytes_read != mem::size_of::<u32>() {
                 return Err(PakError::UnexpectedEof);
             } else {
                 u32::from_le_bytes(offset_size_buffer)
