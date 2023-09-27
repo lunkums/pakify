@@ -6,8 +6,8 @@ const MISSING_ENTRY_PATH: &str = "nothing.txt";
 
 fn main() {
     match pak_test() {
-        Ok(_) => println!("Successfully loaded the pak file at {PAK_FILE_PATH}"),
-        Err(error) => println!("Failed to load the pak file due to: {error}"),
+        Ok(_) => println!("Successfully loaded the pak file at {}", PAK_FILE_PATH),
+        Err(error) => println!("Failed to load the pak file due to: {}", error),
     }
 }
 
