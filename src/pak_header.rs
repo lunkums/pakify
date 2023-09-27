@@ -1,6 +1,6 @@
 use std::{fmt, fs::File, mem, os::windows::prelude::FileExt};
 
-use crate::pak_file_entry::PakFileEntry;
+use crate::{pak_error::PakError, pak_file_entry::PakFileEntry};
 
 pub struct PakHeader {
     id: u32,
@@ -20,7 +20,7 @@ impl fmt::Debug for PakHeader {
 
 impl PakHeader {
     pub fn num_entries(&self) -> usize {
-        self.size as usize / mem::size_of::<PakFileEntry>()
+        self.size as usize / PakFileEntry::SIZE
     }
 
     pub fn offset(&self) -> u32 {
@@ -28,72 +28,60 @@ impl PakHeader {
     }
 
     fn id(&self) -> String {
-        let id_bytes = self.id.to_le_bytes();
-        let mut id = String::new();
-
-        for byte in id_bytes {
-            id.push(byte as char);
-        }
-
-        id
+        self.id
+            .to_le_bytes()
+            .iter()
+            .map(|byte| *byte as char)
+            .collect()
     }
 
-    pub fn from_file(file: &File) -> Result<PakHeader, &str> {
-        const VALID_PAK_ID: u32 = 1262698832;
+    pub fn load(file: &File) -> Result<PakHeader, PakError> {
+        const VALID_PAK_ID: u32 = 1262698832; // Equal to the UTF-8 string "PACK"
         const SIZE: usize = 4;
 
         let mut buffer = [0u8; SIZE];
 
         // Read the id
         let position = 0;
-        let id = match file.seek_read(&mut buffer, position) {
-            Ok(bytes_read) => {
-                if bytes_read != SIZE {
-                    return Err("Failed to read the entire header id");
-                } else {
-                    u32::from_le_bytes(buffer)
-                }
-            }
-            Err(_) => return Err("Failed to read the header id"),
+        let bytes_read = file.seek_read(&mut buffer, position)?;
+        let id = if bytes_read != SIZE {
+            return Err(PakError::UnexpectedEof);
+        } else {
+            u32::from_le_bytes(buffer)
         };
 
         // Validate the id
         if id != VALID_PAK_ID {
-            return Err("Invalid header id");
+            return Err(PakError::InvalidField("header.id"));
         }
 
         // Read the offset
         let position = mem::size_of_val(&id) as u64;
-        let offset = match file.seek_read(&mut buffer, position) {
-            Ok(bytes_read) => {
-                if bytes_read != SIZE {
-                    return Err("Failed to read the entire header offset");
-                } else {
-                    u32::from_le_bytes(buffer)
-                }
-            }
-            Err(_) => return Err("Failed to read the header offset"),
+        let bytes_read = file.seek_read(&mut buffer, position)?;
+        let offset = if bytes_read != SIZE {
+            return Err(PakError::UnexpectedEof);
+        } else {
+            u32::from_le_bytes(buffer)
         };
 
         // Validate the offset
         if (offset as usize) < mem::size_of::<PakHeader>() {
-            return Err("Invalid header offset");
+            return Err(PakError::InvalidField("header.offset"));
         }
 
         // Read the size
         let position = position + mem::size_of_val(&offset) as u64;
-        let size = match file.seek_read(&mut buffer, position) {
-            Ok(bytes_read) => {
-                if bytes_read != SIZE {
-                    return Err("Failed to read the entire header offset");
-                } else {
-                    u32::from_le_bytes(buffer)
-                }
-            }
-            Err(_) => return Err("Failed to read the header offset"),
+        let bytes_read = file.seek_read(&mut buffer, position)?;
+        let size = if bytes_read != SIZE {
+            return Err(PakError::UnexpectedEof);
+        } else {
+            u32::from_le_bytes(buffer)
         };
 
         // Validate the size
+        if (size as usize) % PakFileEntry::SIZE != 0 {
+            return Err(PakError::InvalidField("header.size"));
+        }
 
         Ok(PakHeader { id, offset, size })
     }

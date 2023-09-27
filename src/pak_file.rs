@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use crate::{pak_file_entry::PakFileEntry, pak_header::PakHeader};
+use crate::{pak_error::PakError, pak_file_entry::PakFileEntry, pak_header::PakHeader};
 
 #[derive(Debug)]
 pub struct PakFile {
@@ -9,17 +9,9 @@ pub struct PakFile {
 }
 
 impl PakFile {
-    pub fn from_file(file: &File) -> Result<PakFile, &str> {
-        match PakHeader::from_file(file) {
-            Ok(header) => {
-                let entries = PakFileEntry::from_file(file, header.num_entries(), header.offset());
-
-                match entries {
-                    Ok(entries) => Ok(PakFile { header, entries }),
-                    Err(_) => Err("Invalid file entry"),
-                }
-            }
-            Err(error) => Err(error),
-        }
+    pub fn load(file: &File) -> Result<PakFile, PakError> {
+        let header = PakHeader::load(file)?;
+        let entries = PakFileEntry::load_entries(file, header.num_entries(), header.offset())?;
+        Ok(PakFile { header, entries })
     }
 }
